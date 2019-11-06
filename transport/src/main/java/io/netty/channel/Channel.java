@@ -76,6 +76,7 @@ import java.net.SocketAddress;
  */
 public interface Channel extends AttributeMap, ChannelOutboundInvoker, Comparable<Channel> {
 
+    // 关键的绑定属性
     /**
      * Returns the globally unique identifier of this {@link Channel}.
      */
@@ -99,6 +100,7 @@ public interface Channel extends AttributeMap, ChannelOutboundInvoker, Comparabl
      */
     ChannelConfig config();
 
+    // 以下都是一些状态判断信息
     /**
      * Returns {@code true} if the {@link Channel} is open and may get active later
      */
@@ -114,6 +116,7 @@ public interface Channel extends AttributeMap, ChannelOutboundInvoker, Comparabl
      */
     boolean isActive();
 
+    // 部分元信息
     /**
      * Return the {@link ChannelMetadata} of the {@link Channel} which describe the nature of the {@link Channel}.
      */
@@ -152,6 +155,7 @@ public interface Channel extends AttributeMap, ChannelOutboundInvoker, Comparabl
      */
     ChannelFuture closeFuture();
 
+    // 读写状态
     /**
      * Returns {@code true} if and only if the I/O thread will perform the
      * requested write operation immediately.  Any write requests made when
@@ -193,6 +197,7 @@ public interface Channel extends AttributeMap, ChannelOutboundInvoker, Comparabl
     @Override
     Channel flush();
 
+    // etc. ChannelOutInvoker的方法等
     /**
      * <em>Unsafe</em> operations that should <em>never</em> be called from user-code. These methods
      * are only provided to implement the actual transport, and must be invoked from an I/O thread except for the
@@ -207,7 +212,8 @@ public interface Channel extends AttributeMap, ChannelOutboundInvoker, Comparabl
      * </ul>
      */
     interface Unsafe {
-
+        // Unsafe除了一些关键的outbound关键动作，基本上有一个socket的核心生命流程的方法，还有一些字节管理alloc
+        // 从方法来看，Unsafe与EventLoop结合的更加紧密
         /**
          * Return the assigned {@link RecvByteBufAllocator.Handle} which will be used to allocate {@link ByteBuf}'s when
          * receiving data.

@@ -186,6 +186,7 @@ public interface ChannelOutboundInvoker {
      */
     ChannelFuture deregister(ChannelPromise promise);
 
+    // 这个方法能产生 ChannelInBoundHandler的关联事件，其他的方法产生的均是 ChannelOutBoundHandler事件
     /**
      * Request to Read data from the {@link Channel} into the first inbound buffer, triggers an
      * {@link ChannelInboundHandler#channelRead(ChannelHandlerContext, Object)} event if data was

@@ -107,6 +107,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
         return new DefaultChannelPipeline(this);
     }
 
+    // writable的相关检测都使用内部的buffer状态来表示，和socket，selector本身的状态并无关系
     @Override
     public boolean isWritable() {
         ChannelOutboundBuffer buf = unsafe.outboundBuffer();
@@ -328,6 +329,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
         return unsafe;
     }
 
+    // 该类里，除了判断writable channel从外部调用了unsafe，其余均是unsafe调用channel方法
     /**
      * Create a new {@link AbstractUnsafe} instance which will be used for the life-time of the {@link Channel}
      */
@@ -411,6 +413,15 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
     }
 
     /**
+     * bind | first register -> active
+     * register -> register
+     * disconnect -> inactive
+     *
+     * close -> inactive | deregister
+     * deregister -> deregister
+     */
+
+    /**
      * {@link Unsafe} implementation which sub-classes must extend and use.
      */
     protected abstract class AbstractUnsafe implements Unsafe {
@@ -463,6 +474,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 return;
             }
 
+            // 内部开始绑定eventLoop
             AbstractChannel.this.eventLoop = eventLoop;
 
             if (eventLoop.inEventLoop()) {
@@ -494,6 +506,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                     return;
                 }
                 boolean firstRegistration = neverRegistered;
+                // 调用channel方法
                 doRegister();
                 neverRegistered = false;
                 registered = true;
@@ -795,6 +808,10 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 return;
             }
 
+            /**
+             * 所有操作在单个队列执行，所以能保证之前提交的任务先执行完成，而后调用这个方法
+             */
+
             // As a user may call deregister() from within any method while doing processing in the ChannelPipeline,
             // we need to ensure we do the actual deregister operation later. This is needed as for example,
             // we may be in the ByteToMessageDecoder.callDecode(...) method and so still try to do processing in
@@ -812,6 +829,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                     } catch (Throwable t) {
                         logger.warn("Unexpected exception occurred while deregistering a channel.", t);
                     } finally {
+                        // 调用close才会调用这个逻辑
                         if (fireChannelInactive) {
                             pipeline.fireChannelInactive();
                         }
@@ -850,6 +868,14 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
             }
         }
 
+        /**
+         * 写入将msg放入buffer，并没有直接网络io，所以这部分有两个问题
+         *
+         * 1. 何时执行io
+         * 2. buffer full
+         * @param msg
+         * @param promise
+         */
         @Override
         public final void write(Object msg, ChannelPromise promise) {
             assertEventLoop();

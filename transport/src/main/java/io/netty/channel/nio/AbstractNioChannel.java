@@ -69,6 +69,11 @@ public abstract class AbstractNioChannel extends AbstractChannel {
     private ScheduledFuture<?> connectTimeoutFuture;
     private SocketAddress requestedRemoteAddress;
 
+    @Override
+    public boolean isOpen() {
+        return ch.isOpen();
+    }
+
     /**
      * Create a new instance
      *
@@ -94,11 +99,6 @@ public abstract class AbstractNioChannel extends AbstractChannel {
 
             throw new ChannelException("Failed to enter non-blocking mode.", e);
         }
-    }
-
-    @Override
-    public boolean isOpen() {
-        return ch.isOpen();
     }
 
     @Override
